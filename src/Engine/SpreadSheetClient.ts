@@ -17,14 +17,22 @@ import { PortsGlobal } from '../PortsGlobal';
 
 class SpreadSheetClient {
     private _serverPort: number = PortsGlobal.serverPort;
-    private _baseURL: string = `http://pencil.local:${this._serverPort}`;
+    private _baseURL: string = `http://localhost:${this._serverPort}`;
     private _userName: string = 'juancho';
     private _documentName: string = 'test';
     private _document: DocumentTransport;
 
     constructor(documentName: string, userName: string) {
-        this._userName = userName;
-        this._documentName = documentName;
+        if (userName === undefined || userName === '') {
+            this._userName = 'juancho';
+        } else {
+            this._userName = userName;
+        }
+        if (documentName === undefined || documentName === '') {
+            this._documentName = 'test';
+        } else {
+            this._documentName = documentName;
+        }
         this.getDocument(this._documentName, this._userName);
 
         this._document = this._initializeBlankDocument();
@@ -65,7 +73,7 @@ class SpreadSheetClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "userName": this._userName })
+            body: JSON.stringify({ "userName": this._userName ? this._userName : 'juancho' })
         };
 
         return new Promise((resolve, reject) => {
@@ -197,7 +205,7 @@ class SpreadSheetClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "userName": this._userName })
+            body: JSON.stringify({ "userName": this._userName ? this._userName : 'juancho' })
         })
             .then(response => {
                 return response.json() as Promise<DocumentTransport>;
@@ -209,13 +217,18 @@ class SpreadSheetClient {
 
 
     public addToken(token: string): void {
-        const requestAddTokenURL = `${this._baseURL}/document/addtoken/${this._documentName}/${token}`;
+        if (token === "/") {
+            token = "%2F";
+        } else if (token === ".") {
+            token = "%2E"
+        }
+        const requestAddTokenURL = `${this._baseURL}/document/addtoken/${this._documentName}/token=${token}`;
         fetch(requestAddTokenURL, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "userName": this._userName })
+            body: JSON.stringify({ "userName": this._userName ? this._userName : 'juancho' })
         })
             .then(response => {
 
@@ -280,7 +293,18 @@ class SpreadSheetClient {
     }
 
     public clearFormula(): void {
-        return;
+        const requestClearFormulaURL = `${this._baseURL}/document/clear/formula/${this._documentName}`;
+        fetch(requestClearFormulaURL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ "userName": this._userName })
+        }).then(response => {
+            return response.json() as Promise<DocumentTransport>;
+        }).then((document: DocumentTransport) => {
+            this._updateDocument(document);
+        });
     }
 
 
@@ -302,7 +326,7 @@ class SpreadSheetClient {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "userName": userName })
+            body: JSON.stringify({ "userName": userName ? userName : 'juancho' })
         })
             .then(response => {
                 return response.json() as Promise<DocumentTransport>;
